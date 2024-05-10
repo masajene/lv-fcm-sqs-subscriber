@@ -6,11 +6,12 @@ import (
 
 // SQSPayload struct defines the expected payload for SQS messages
 type SQSPayload struct {
-	RegistrationIDs []string       `json:"registration_ids" binding:"required"`
-	TimeToLive      int            `json:"time_to_live"`
-	CollapseKey     string         `json:"collapse_key" binding:"required"`
-	Data            SQSPayloadData `json:"data" binding:"required"`
-	Priority        string         `json:"priority" binding:"required"`
+	ConnectionSource string         `json:"connection_source"`
+	RegistrationIDs  []string       `json:"registration_ids" binding:"required"`
+	TimeToLive       int            `json:"time_to_live"`
+	CollapseKey      string         `json:"collapse_key" binding:"required"`
+	Data             SQSPayloadData `json:"data" binding:"required"`
+	Priority         string         `json:"priority" binding:"required"`
 }
 
 type SQSPayloadData struct {

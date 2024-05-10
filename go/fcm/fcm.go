@@ -3,21 +3,24 @@ package fcm
 import (
 	"context"
 	_ "embed"
-	"errors"
 	"fcm-sub/logger"
 	"fcm-sub/model"
 	firebase "firebase.google.com/go/v4"
 	"firebase.google.com/go/v4/messaging"
 	"fmt"
-	"golang.org/x/oauth2/google"
 	"google.golang.org/api/option"
 )
 
 const firebaseScope = "https://www.googleapis.com/auth/firebase.messaging"
-const fcmEndpoint = "https://fcm.googleapis.com/v1/{parent=projects/*}/messages:send"
 
-//go:embed serviceAccountKey.json
-var key []byte
+//go:embed default-serviceAccountKey.json
+var defaultKey []byte
+
+//go:embed kariya-serviceAccountKey.json
+var kariyaKey []byte
+
+//go:embed yamato-serviceAccountKey.json
+var yamatoKey []byte
 
 func NewFcm() *Fcm {
 	return &Fcm{}
@@ -27,7 +30,15 @@ type Fcm struct {
 }
 
 func (f *Fcm) Send(m model.SQSPayload) error {
-	opt := option.WithCredentialsJSON(key)
+	var opt option.ClientOption
+	switch m.ConnectionSource {
+	case "kariya.lifevision.net":
+		opt = option.WithCredentialsJSON(kariyaKey)
+	case "yamato.lifevision.net":
+		opt = option.WithCredentialsJSON(yamatoKey)
+	default:
+		opt = option.WithCredentialsJSON(defaultKey)
+	}
 	app, err := firebase.NewApp(context.Background(), nil, opt)
 	if err != nil {
 		return err
@@ -45,7 +56,7 @@ func (f *Fcm) Send(m model.SQSPayload) error {
 
 	message := &messaging.MulticastMessage{
 		Tokens: m.RegistrationIDs,
-		Data:   dataMap,
+		//Data:   dataMap,
 		Android: &messaging.AndroidConfig{
 			CollapseKey: m.CollapseKey,
 			Priority:    m.Priority,
@@ -53,7 +64,7 @@ func (f *Fcm) Send(m model.SQSPayload) error {
 		},
 	}
 
-	br, err := client.SendEachForMulticastDryRun(context.Background(), message)
+	br, err := client.SendEachForMulticast(context.Background(), message)
 	if err != nil {
 		return err
 	}
@@ -68,20 +79,8 @@ func (f *Fcm) Send(m model.SQSPayload) error {
 		}
 		fmt.Printf("Map of tokens that caused failures: %v\n", failedTokens)
 		// send error queue
+	} else {
+		logger.GetLogger().Info("Successfully sent message", "response", br)
 	}
 	return err
-}
-
-// NewToken function to get token for fcm-send
-func (f *Fcm) newToken() (string, error) {
-	cfg, err := google.JWTConfigFromJSON(key, firebaseScope)
-	if err != nil {
-		return "", errors.New("fcm: failed to get JWT config for the firebase.messaging scope")
-	}
-	ts := cfg.TokenSource(context.Background())
-	token, err := ts.Token()
-	if err != nil {
-		return "", errors.New("fcm: failed to generate Bearer token")
-	}
-	return token.AccessToken, nil
 }
