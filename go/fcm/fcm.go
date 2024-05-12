@@ -5,9 +5,9 @@ import (
 	_ "embed"
 	"fcm-sub/logger"
 	"fcm-sub/model"
+	"fcm-sub/sqs"
 	firebase "firebase.google.com/go/v4"
 	"firebase.google.com/go/v4/messaging"
-	"fmt"
 	"google.golang.org/api/option"
 )
 
@@ -69,18 +69,23 @@ func (f *Fcm) Send(m model.SQSPayload) error {
 		return err
 	}
 	if br.FailureCount > 0 {
-		var failedTokens map[string]error
-		failedTokens = make(map[string]error)
+		var failedTokens []model.ErrorSqsPayload
 		for idx, resp := range br.Responses {
 			if !resp.Success {
 				// The order of responses corresponds to the order of the registration tokens.
-				failedTokens[m.RegistrationIDs[idx]] = resp.Error
+				failedTokens = append(failedTokens, model.ErrorSqsPayload{
+					InfoId:         m.Data.Message.ID,
+					RegistrationId: m.RegistrationIDs[idx],
+				})
 			}
 		}
-		fmt.Printf("Map of tokens that caused failures: %v\n", failedTokens)
 		// send error queue
-	} else {
-		logger.GetLogger().Info("Successfully sent message", "response", br)
+		if len(failedTokens) > 0 {
+			logger.GetLogger().Error("Failed to send message", "failedTokens", failedTokens)
+			_ = sqs.SendErrorMessages(failedTokens)
+		}
 	}
+	logger.GetLogger().Info("Successfully sent message", "response", br)
+	_ = sqs.SendCompleteMessages(m.Data.Message.ID)
 	return err
 }
