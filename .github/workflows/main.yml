@@ -29,6 +29,16 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
 
+      - name: copy google-service
+        env:
+          GOOGLE_SERVICE: ${{ secrets.GOOGLE_SERVICE_JSON }}
+          GOOGLE_SERVICE_KARIYA: ${{ secrets.GOOGLE_SERVICE_KARIYA_JSON }}
+          GOOGLE_SERVICE_YAMATO: ${{ secrets.GOOGLE_SERVICE_YAMATO_JSON }}
+        run:  |
+          echo $GOOGLE_SERVICE | base64 --decode --ignore-garbage > ./go/fcm/default-serviceAccountKey.json
+          echo $GOOGLE_SERVICE_KARIYA | base64 --decode --ignore-garbage > ./go/fcm/kariya-serviceAccountKey.json
+          echo $GOOGLE_SERVICE_YAMATO | base64 --decode --ignore-garbage > ./go/fcm//yamato-serviceAccountKey.json
+
       - name: Build and push Docker image
         uses: docker/build-push-action@v2
         with:
