@@ -11,8 +11,6 @@ import (
 	"google.golang.org/api/option"
 )
 
-const firebaseScope = "https://www.googleapis.com/auth/firebase.messaging"
-
 //go:embed default-serviceAccountKey.json
 var defaultKey []byte
 

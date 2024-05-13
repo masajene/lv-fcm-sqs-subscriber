@@ -7,8 +7,9 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/sqs"
+	"github.com/google/uuid"
 	"os"
-	"strconv"
+	"strings"
 )
 
 func SendErrorMessages(m []model.ErrorSqsPayload) error {
@@ -18,15 +19,20 @@ func SendErrorMessages(m []model.ErrorSqsPayload) error {
 	}))
 	sqsSvc := sqs.New(sess)
 
-	for i, v := range m {
+	for _, v := range m {
 		msgJson, err := json.Marshal(v)
 		if err != nil {
 			return err
 		}
+
+		uuidWithHyphen := uuid.New()
+		gid := strings.Replace(uuidWithHyphen.String(), "-", "", -1)
+
 		_, err = sqsSvc.SendMessage(&sqs.SendMessageInput{
-			MessageBody:    aws.String(string(msgJson)),
-			QueueUrl:       &queueURL,
-			MessageGroupId: aws.String(v.InfoId + "-" + strconv.Itoa(i)),
+			MessageBody:            aws.String(string(msgJson)),
+			QueueUrl:               &queueURL,
+			MessageGroupId:         aws.String(gid),
+			MessageDeduplicationId: aws.String("dp-" + gid),
 		})
 		if err != nil {
 			return err
@@ -43,10 +49,14 @@ func SendCompleteMessages(id string) error {
 	}))
 	sqsSvc := sqs.New(sess)
 
+	uuidWithHyphen := uuid.New()
+	gid := strings.Replace(uuidWithHyphen.String(), "-", "", -1)
+
 	_, err := sqsSvc.SendMessage(&sqs.SendMessageInput{
-		MessageBody:    aws.String(id),
-		QueueUrl:       &queueURL,
-		MessageGroupId: aws.String(id),
+		MessageBody:            aws.String(id),
+		QueueUrl:               &queueURL,
+		MessageGroupId:         aws.String(gid),
+		MessageDeduplicationId: aws.String("dp-" + gid),
 	})
 	if err != nil {
 		logger.GetLogger().Error("Error sending message to SQS", "error", err)
