@@ -60,15 +60,17 @@ func SendCompleteMessages(id, source string) error {
 
 	uuidWithHyphen := uuid.New()
 	gid := strings.Replace(uuidWithHyphen.String(), "-", "", -1)
-
-	_, err = sqsSvc.SendMessage(&sqs.SendMessageInput{
+	payload := &sqs.SendMessageInput{
 		MessageBody:            aws.String(string(msgJson)),
 		QueueUrl:               &queueURL,
 		MessageGroupId:         aws.String(gid),
 		MessageDeduplicationId: aws.String("dp-" + gid),
-	})
+	}
+
+	_, err = sqsSvc.SendMessage(payload)
 	if err != nil {
 		logger.GetLogger().Error("Error sending message to SQS", "error", err)
 	}
+	logger.GetLogger().Info("Send message to SQS", "message", payload)
 	return err
 }

@@ -72,8 +72,9 @@ func (f *Fcm) Send(m model.SQSPayload) error {
 			if !resp.Success {
 				// The order of responses corresponds to the order of the registration tokens.
 				failedTokens = append(failedTokens, model.ErrorSqsPayload{
-					InfoId:         m.Data.Message.ID,
-					RegistrationId: m.RegistrationIDs[idx],
+					ConnectionSource: m.ConnectionSource,
+					InfoId:           m.Data.Message.ID,
+					RegistrationId:   m.RegistrationIDs[idx],
 				})
 			}
 		}
