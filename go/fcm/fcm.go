@@ -84,6 +84,6 @@ func (f *Fcm) Send(m model.SQSPayload) error {
 		}
 	}
 	logger.GetLogger().Info("Successfully sent message", "response", br)
-	_ = sqs.SendCompleteMessages(m.Data.Message.ID)
+	_ = sqs.SendCompleteMessages(m.Data.Message.ID, m.ConnectionSource)
 	return err
 }
