@@ -42,18 +42,27 @@ func SendErrorMessages(m []model.ErrorSqsPayload) error {
 	return nil
 }
 
-func SendCompleteMessages(id string) error {
+func SendCompleteMessages(id, source string) error {
 	queueURL := os.Getenv("COMPLETE_QUEUE_URL")
 	sess := session.Must(session.NewSession(&aws.Config{
 		Region: aws.String("ap-northeast-1"),
 	}))
 	sqsSvc := sqs.New(sess)
 
+	m := model.CompleteSqsPayload{
+		ConnectionSource: source,
+		InfoId:           id,
+	}
+	msgJson, err := json.Marshal(m)
+	if err != nil {
+		return err
+	}
+
 	uuidWithHyphen := uuid.New()
 	gid := strings.Replace(uuidWithHyphen.String(), "-", "", -1)
 
-	_, err := sqsSvc.SendMessage(&sqs.SendMessageInput{
-		MessageBody:            aws.String(id),
+	_, err = sqsSvc.SendMessage(&sqs.SendMessageInput{
+		MessageBody:            aws.String(string(msgJson)),
 		QueueUrl:               &queueURL,
 		MessageGroupId:         aws.String(gid),
 		MessageDeduplicationId: aws.String("dp-" + gid),
