@@ -19,28 +19,32 @@ type SQSPayloadData struct {
 }
 
 type SQSPayloadMessage struct {
-	Type              string           `json:"type" binding:"required"`
-	APIURL            string           `json:"api_url" binding:"required"`
-	ID                string           `json:"id" binding:"required"`
-	Revision          *string          `json:"revision" binding:"required"`
-	Title             *string          `json:"title" binding:"required"`
-	DeliveryDatetime  *string          `json:"delivery_datetime" binding:"required"`
-	EmergencyLevel    *string          `json:"emergency_level" binding:"required"`
-	CategoryID        *string          `json:"category_id" binding:"required"`
-	Registered        *string          `json:"registered" binding:"required"`
-	DeleteFlag        *string          `json:"delete_flag" binding:"required"`
-	Content           *string          `json:"content" binding:"required"`
-	InfoIDs           *[]string        `json:"info_ids"`
-	EmgIDs            *[]string        `json:"emg_ids"`
-	AudioData1        *string          `json:"audio_data1"`
-	AudioData2        *string          `json:"audio_data2"`
-	AudioData3        *string          `json:"audio_data3"`
-	Image             *SQSPayloadImage `json:"image"`
-	Sound             *SQSPayloadSound `json:"sound"`
-	ExternalLinkURL   *string          `json:"external_link_url"`
-	ExternalLinkTitle *string          `json:"external_link_title"`
-	EmergencyMode     bool             `json:"emergency_mode"`
-	IncompleteFlag    bool             `json:"incomplete_flag"`
+	Type               string           `json:"type" binding:"required"`
+	APIURL             string           `json:"api_url" binding:"required"`
+	ID                 string           `json:"id" binding:"required"`
+	Revision           *string          `json:"revision" binding:"required"`
+	Title              *string          `json:"title" binding:"required"`
+	DeliveryDatetime   *string          `json:"delivery_datetime" binding:"required"`
+	EmergencyLevel     *string          `json:"emergency_level" binding:"required"`
+	CategoryID         *string          `json:"category_id" binding:"required"`
+	Registered         *string          `json:"registered"`
+	DeleteFlag         *string          `json:"delete_flag" binding:"required"`
+	Content            *string          `json:"content"`
+	InfoIDs            *[]string        `json:"info_ids"`
+	EmgIDs             *[]string        `json:"emg_ids"`
+	AudioData1         *string          `json:"audio_data1"`
+	AudioData2         *string          `json:"audio_data2"`
+	AudioData3         *string          `json:"audio_data3"`
+	Image              *SQSPayloadImage `json:"image"`
+	Sound              *SQSPayloadSound `json:"sound"`
+	ExternalLinkURL    *string          `json:"external_link_url"`
+	ExternalLinkTitle  *string          `json:"external_link_title"`
+	EmergencyMode      bool             `json:"emergency_mode"`
+	IncompleteFlag     bool             `json:"incomplete_flag"`
+	ExpireDatetime     string           `json:"expire_datetime"`
+	ToBeConfirmed      int              `json:"to_be_confirmed"`
+	EmergencyModeTitle string           `json:"emergency_mode_title"`
+	Critical           int              `json:"critical"`
 }
 
 type SQSPayloadImage struct {
