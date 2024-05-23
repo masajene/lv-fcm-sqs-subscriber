@@ -2,6 +2,7 @@ package model
 
 import (
 	"encoding/json"
+	"fmt"
 )
 
 // SQSPayload struct defines the expected payload for SQS messages
@@ -15,7 +16,9 @@ type SQSPayload struct {
 }
 
 type SQSPayloadData struct {
-	Message SQSPayloadMessage `json:"message"`
+	//Message SQSPayloadMessage `json:"message"`
+	// json文字列に変更
+	Message string `json:"message"`
 }
 
 type SQSPayloadMessage struct {
@@ -44,7 +47,7 @@ type SQSPayloadMessage struct {
 	ExpireDatetime     string           `json:"expire_datetime"`
 	ToBeConfirmed      int              `json:"to_be_confirmed"`
 	EmergencyModeTitle string           `json:"emergency_mode_title"`
-	Critical           int              `json:"critical"`
+	Critical           string           `json:"critical"`
 }
 
 type SQSPayloadImage struct {
@@ -60,12 +63,35 @@ type SQSPayloadSound struct {
 	DelayTime int    `json:"delay_time"`
 }
 
-func (d SQSPayloadData) ConvertFcmPayload() (map[string]string, error) {
-	messageJSON, err := json.Marshal(d.Message)
+func (d *SQSPayloadData) ConvertFcmPayload() (map[string]string, error) {
+	//messageJSON, err := json.Marshal(d.Message)
+	//if err != nil {
+	//	return nil, err
+	//}
+	return map[string]string{
+		"message": d.Message,
+	}, nil
+}
+
+func (d *SQSPayloadData) UnmarshalMessage() (map[string]string, error) {
+	var data map[string]interface{}
+	err := json.Unmarshal([]byte(d.Message), &data)
 	if err != nil {
+		fmt.Println("Error decoding JSON:", err)
 		return nil, err
 	}
-	return map[string]string{
-		"message": string(messageJSON),
-	}, nil
+
+	// map[string]interface{}をmap[string]stringに変換
+	stringMap := make(map[string]string)
+	for key, value := range data {
+		switch v := value.(type) {
+		case string:
+			stringMap[key] = v
+		case nil:
+			stringMap[key] = ""
+		default:
+			stringMap[key] = fmt.Sprintf("%v", v)
+		}
+	}
+	return stringMap, nil
 }

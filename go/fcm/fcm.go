@@ -66,6 +66,7 @@ func (f *Fcm) Send(m model.SQSPayload) error {
 	if err != nil {
 		return err
 	}
+	msg, _ := m.Data.UnmarshalMessage()
 	if br.FailureCount > 0 {
 		var failedTokens []model.ErrorSqsPayload
 		for idx, resp := range br.Responses {
@@ -73,7 +74,7 @@ func (f *Fcm) Send(m model.SQSPayload) error {
 				// The order of responses corresponds to the order of the registration tokens.
 				failedTokens = append(failedTokens, model.ErrorSqsPayload{
 					ConnectionSource: m.ConnectionSource,
-					InfoId:           m.Data.Message.ID,
+					InfoId:           msg["id"],
 					RegistrationId:   m.RegistrationIDs[idx],
 				})
 			}
@@ -85,9 +86,9 @@ func (f *Fcm) Send(m model.SQSPayload) error {
 		}
 	}
 	logger.GetLogger().Info("Successfully sent message", "response", br)
-	if *m.Data.Message.DeleteFlag != "1" {
-		logger.GetLogger().Info("Delete message", "message", m.Data.Message.ID)
-		_ = sqs.SendCompleteMessages(m.Data.Message.ID, m.ConnectionSource)
+	if msg["delete_flag"] != "1" {
+		logger.GetLogger().Info("Delete message", "message", msg["id"])
+		_ = sqs.SendCompleteMessages(msg["id"], m.ConnectionSource)
 	}
 	return err
 }
