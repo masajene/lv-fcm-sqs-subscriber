@@ -62,11 +62,25 @@ func (f *Fcm) Send(m model.SQSPayload) error {
 		},
 	}
 
+	type FcmSendResponse struct {
+		Success   bool
+		MessageID string
+		Error     string
+	}
+
+	type FcmRequest struct {
+		SuccessCount int
+		FailureCount int
+		Responses    []*FcmSendResponse
+	}
+
 	br, err := client.SendEachForMulticast(context.Background(), message)
 	if err != nil {
 		return err
 	}
 	msg, _ := m.Data.UnmarshalMessage()
+	var rest []*FcmSendResponse
+
 	if br.FailureCount > 0 {
 		var failedTokens []model.ErrorSqsPayload
 		for idx, resp := range br.Responses {
@@ -78,6 +92,19 @@ func (f *Fcm) Send(m model.SQSPayload) error {
 					RegistrationId:   m.RegistrationIDs[idx],
 				})
 			}
+			var errMsg string
+			if resp.Error != nil {
+				errMsg = resp.Error.Error()
+			}
+			var messageID string
+			if idx < len(m.RegistrationIDs) {
+				messageID = m.RegistrationIDs[idx]
+			}
+			rest = append(rest, &FcmSendResponse{
+				Success:   resp.Success,
+				MessageID: messageID,
+				Error:     errMsg,
+			})
 		}
 		// send error queue
 		if len(failedTokens) > 0 {
@@ -85,7 +112,13 @@ func (f *Fcm) Send(m model.SQSPayload) error {
 			_ = sqs.SendErrorMessages(failedTokens)
 		}
 	}
-	logger.GetLogger().Info("Successfully sent message", "response", br)
+
+	result := &FcmRequest{
+		SuccessCount: br.SuccessCount,
+		FailureCount: br.FailureCount,
+		Responses:    rest,
+	}
+	logger.GetLogger().Info("Successfully sent message", "response", result)
 	if msg["delete_flag"] != "1" {
 		logger.GetLogger().Info("Delete message", "message", msg["id"])
 		_ = sqs.SendCompleteMessages(msg["id"], m.ConnectionSource)
