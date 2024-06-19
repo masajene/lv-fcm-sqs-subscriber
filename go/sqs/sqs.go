@@ -42,7 +42,7 @@ func SendErrorMessages(m []model.ErrorSqsPayload) error {
 	return nil
 }
 
-func SendCompleteMessages(id, source string) error {
+func SendCompleteMessages(id, source string, count int) error {
 	queueURL := os.Getenv("COMPLETE_QUEUE_URL")
 	sess := session.Must(session.NewSession(&aws.Config{
 		Region: aws.String("ap-northeast-1"),
@@ -52,6 +52,7 @@ func SendCompleteMessages(id, source string) error {
 	m := model.CompleteSqsPayload{
 		ConnectionSource: source,
 		InfoId:           id,
+		SuccessCount:     count,
 	}
 	msgJson, err := json.Marshal(m)
 	if err != nil {

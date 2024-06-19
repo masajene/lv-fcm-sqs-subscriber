@@ -121,7 +121,7 @@ func (f *Fcm) Send(m model.SQSPayload) error {
 	logger.GetLogger().Info("Successfully sent message", "response", result)
 	if msg["delete_flag"] != "1" {
 		logger.GetLogger().Info("Delete message", "message", msg["id"])
-		_ = sqs.SendCompleteMessages(msg["id"], m.ConnectionSource)
+		_ = sqs.SendCompleteMessages(msg["id"], m.ConnectionSource, br.SuccessCount)
 	}
 	return err
 }
