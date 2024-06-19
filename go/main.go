@@ -39,9 +39,9 @@ func Handler(ctx context.Context, sqsEvent events.SQSEvent) error {
 			continue
 		}
 
-		// if RegistrationIds is count over 500, return error
+		// if RegistrationIds is count over splitThreshold, return error
 		if len(payload.RegistrationIDs) > splitThreshold {
-			err = fmt.Errorf("RegistrationIds count over 1000")
+			err = fmt.Errorf("RegistrationIds count over %d", splitThreshold)
 			continue
 		}
 
