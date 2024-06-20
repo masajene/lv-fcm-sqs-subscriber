@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fcm-sub/fcm"
 	"fcm-sub/logger"
 	"fcm-sub/model"
@@ -35,6 +36,10 @@ func Handler(ctx context.Context, sqsEvent events.SQSEvent) error {
 		var payload model.SQSPayload
 		err := json.Unmarshal([]byte(body), &payload)
 		if err != nil {
+			var err *json.SyntaxError
+			if errors.As(err, &err) {
+				fmt.Println(body[err.Offset-15 : err.Offset+15])
+			}
 			logger.GetLogger().Error("Error unmarshalling JSON", "error", err)
 			continue
 		}
